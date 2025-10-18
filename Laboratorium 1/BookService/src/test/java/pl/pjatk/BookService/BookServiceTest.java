@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BookServiceTest {
@@ -16,7 +18,7 @@ class BookServiceTest {
     }
 
     @Nested
-    class getBookByTitleTests {
+    class GetBookByTitleTests {
 
         @Test
         void shouldReturnBookWhenExists() {
@@ -26,6 +28,7 @@ class BookServiceTest {
 
             assertEquals(title, result.getTitle());
             assertNotNull(result);
+            assertEquals("George Orwell", result.getAuthor());
         }
 
         @Test
@@ -38,12 +41,10 @@ class BookServiceTest {
             assertNotNull(result);
             assertTrue(result.getMessage().contains("Book not found"));
         }
-
-
     }
 
     @Nested
-    class updateBookPagesByTitleTests {
+    class UpdateBookPagesByTitleTests {
 
         @Test
         void shouldUpdateBookPagesByTitle() {
@@ -53,6 +54,7 @@ class BookServiceTest {
             final var result = bookService.updateBookPagesByTitle(title, page);
 
             assertEquals(page, result.getPages());
+            assertSame(result, bookService.getBookByTitle(title));
         }
 
         @Test
@@ -64,10 +66,20 @@ class BookServiceTest {
 
             assertNull(result);
         }
+
+        @Test
+        void shouldNotChangeOtherBooksWhenUpdatingOne() {
+            final String updatedTitle = "1984";
+            final int newPages = 999;
+            bookService.updateBookPagesByTitle(updatedTitle, newPages);
+
+            final var hobbit = bookService.getBookByTitle("The Hobbit");
+            assertNotEquals(newPages, hobbit.getPages());
+        }
     }
 
     @Nested
-    class getBooksWithinPagesTests {
+    class GetBooksWithinPagesTests {
 
         @Test
         void shouldReturnBooksWithinPages() {
@@ -77,7 +89,7 @@ class BookServiceTest {
             final var result = bookService.getBooksWithinPages(pageStart, pageEnd);
 
             assertEquals(2, result.size());
-
+            assertTrue(result.stream().allMatch(book -> book.getPages() >= pageStart && book.getPages() <= pageEnd));
         }
 
         @Test
@@ -89,6 +101,16 @@ class BookServiceTest {
 
             assertTrue(result.isEmpty());
         }
-    }
 
+        @Test
+        void shouldIncludeBoundaryValues() {
+            final int pageStart = 310;
+            final int pageEnd = 328;
+
+            final List<Book> result = bookService.getBooksWithinPages(pageStart, pageEnd);
+
+            assertFalse(result.isEmpty());
+            assertTrue(result.stream().anyMatch(b -> b.getPages() == 310 || b.getPages() == 328));
+        }
+    }
 }
