@@ -19,5 +19,4 @@ jobs:
         python-version: "3.10"
 
     - name: Run Game Logic Tests
-      run: |
-        python game.py
+      run: python "Laboratorium 3/game.py"
